@@ -26,6 +26,7 @@ func newModel() (model, error) {
 
 	picker := filepicker.New()
 
+	picker.AutoHeight = false
 	picker.CurrentDirectory = currentDirectory
 	picker.ShowPermissions = true
 	picker.ShowSize = true
@@ -49,6 +50,14 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+
+	case tea.WindowSizeMsg:
+		const reservedHeight = 16
+
+		pickerHeight := max(msg.Height-reservedHeight, 1)
+
+		m.picker.SetHeight(pickerHeight)
+
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
@@ -93,16 +102,14 @@ func (m model) View() tea.View {
 	content.WriteString(m.picker.CurrentDirectory)
 	content.WriteString("\n\n")
 
+	content.WriteString(m.picker.View())
+
 	if m.selectedFile != "" {
 		content.WriteString("\n")
 		content.WriteString("  Wybrany plik: ")
 		content.WriteString(m.selectedFile)
 		content.WriteString("\n")
 	}
-
-	content.WriteString("\n\n")
-	
-	content.WriteString(m.picker.View())
 
 	hiddenStatus := "wyłączone"
 	if m.picker.ShowHidden {
