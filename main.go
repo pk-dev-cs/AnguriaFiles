@@ -7,6 +7,7 @@ import (
 
 	"charm.land/bubbles/v2/filepicker"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type model struct {
@@ -95,6 +96,11 @@ func (m model) View() tea.View {
 
 	var content strings.Builder
 
+	//style := lipgloss.NewStyle().
+	//	Foreground(lipgloss.Color("#FFFFFF")).
+	//	Background(lipgloss.Color("#7D56F4")).
+	//	Bold(true)
+
 	content.WriteString("\n")
 	content.WriteString("  FILE MANAGER\n")
 	content.WriteString("  ────────────\n")
@@ -127,6 +133,9 @@ func (m model) View() tea.View {
 	content.WriteString("  q            wyjście\n")
 
 	view := tea.NewView(content.String())
+	view.BackgroundColor = lipgloss.Color("#c79302")
+	view.ForegroundColor = lipgloss.Color("#000000")
+
 	view.AltScreen = true
 
 	return view
