@@ -89,6 +89,49 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+func renderLogo(width int) string {
+	const logo = `
+⠀⠀⠀⠀⢀⣴⠂⣠⠖⠛⣿⣿⣿⡿⣿⣿⡟⢿⣿⡉⠻⣿⣿⠟⢁⡴⠃⡄⠀⠀
+⠀⠀⠀⢠⡾⠁⣴⣷⣤⣾⣃⣾⡿⢁⣿⣿⣇⣀⣿⣿⡾⠟⢁⣴⠟⣡⣾⠁⠀⠀
+⠀⠀⢠⡿⢁⣼⣿⣧⣴⣿⣿⣹⣿⣾⣿⣏⣻⡿⠟⢉⣠⡶⠟⣡⣾⠟⠁⣸⡇⠀
+⠀⠀⣿⠇⣼⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠋⣁⣤⡶⠟⢉⣴⣾⠟⢁⠀⢰⣿⠀⠀
+⠀⠸⣿⡄⢿⣿⣿⣿⡿⠿⠟⠋⣁⣤⡶⠿⠛⢁⣤⣾⡿⠋⢁⣴⠋⣠⠛⠋⠀⠀
+⠀⠀⠻⢿⣦⣤⣤⣤⣤⠶⠞⠛⠉⡁⠄⠐⠚⠿⠛⢉⣠⡾⠟⢁⣴⠃⠈⠀⠀⠀
+⠀⠀⠀⠠⠤⣬⣥⣤⣤⡴⠶⠟⢁⣤⣶⣷⠶⠒⠚⠋⣉⠤⠶⠿⠋⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠠⣤⣤⣤⣤⣴⣾⣿⣿⠟⢁⣴⣾⠟⣁⣤⣤⠖⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠉⠉⠛⠛⠛⢉⣠⣴⡿⠟⢁⡴⠟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+`
+
+	// U+2800 wygląda jak spacja, ale nią nie jest.
+	art := strings.ReplaceAll(logo, "\u2800", " ")
+
+	// Usuwamy tylko początkowy i końcowy enter.
+	art = strings.Trim(art, "\r\n")
+
+	logoWidth := lipgloss.Width(art)
+
+	title := lipgloss.NewStyle().
+		Bold(true).
+		Render("ANGURIA FILES")
+
+	// Centrujemy tytuł względem logo.
+	title = lipgloss.PlaceHorizontal(
+		logoWidth,
+		lipgloss.Center,
+		title,
+	)
+
+	block := art + "\n\n" + title
+
+	// Centrujemy cały blok, nie każdą linię osobno.
+	return lipgloss.PlaceHorizontal(
+		width,
+		lipgloss.Center,
+		block,
+	)
+}
+
 func (m model) View() tea.View {
 	if m.quitting {
 		return tea.NewView("")
@@ -101,8 +144,9 @@ func (m model) View() tea.View {
 	//	Background(lipgloss.Color("#7D56F4")).
 	//	Bold(true)
 
+	content.WriteString(renderLogo(20))
+
 	content.WriteString("\n")
-	content.WriteString("  FILE MANAGER\n")
 	content.WriteString("  ────────────\n")
 	content.WriteString("  Katalog: ")
 	content.WriteString(m.picker.CurrentDirectory)
