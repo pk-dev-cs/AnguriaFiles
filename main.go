@@ -14,6 +14,9 @@ type model struct {
 	picker       filepicker.Model
 	selectedFile string
 	quitting     bool
+
+	width  int
+	height int
 }
 
 func newModel() (model, error) {
@@ -49,15 +52,64 @@ func (m model) Init() tea.Cmd {
 	return m.picker.Init()
 }
 
+func (m *model) resizePicker() {
+	if m.height <= 0 {
+		return
+	}
+
+	reservedHeight :=
+		lipgloss.Height(m.headerView()) +
+			lipgloss.Height(m.footerView()) +
+			2
+
+	m.picker.SetHeight(max(m.height-reservedHeight, 1))
+}
+
+func (m model) headerView() string {
+	width := m.width
+	if width <= 0 {
+		width = 80
+	}
+
+	return renderLogo(width) +
+		"\n\n" +
+		"  ────────────\n" +
+		"  Katalog: " + m.picker.CurrentDirectory
+}
+
+func (m model) footerView() string {
+	var content strings.Builder
+
+	if m.selectedFile != "" {
+		content.WriteString("  Wybrany plik: ")
+		content.WriteString(m.selectedFile)
+		content.WriteString("\n\n")
+	}
+
+	hiddenStatus := "wyłączone"
+	if m.picker.ShowHidden {
+		hiddenStatus = "włączone"
+	}
+
+	content.WriteString("  ↑/k, ↓/j     poruszanie\n")
+	content.WriteString("  enter/l/→    otwórz katalog lub wybierz plik\n")
+	content.WriteString("  h/←/esc      poprzedni katalog\n")
+	content.WriteString("  .            pliki ukryte: ")
+	content.WriteString(hiddenStatus)
+	content.WriteString("\n")
+	content.WriteString("  r            odśwież\n")
+	content.WriteString("  q            wyjście")
+
+	return content.String()
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
-		const reservedHeight = 16
-
-		pickerHeight := max(msg.Height-reservedHeight, 1)
-
-		m.picker.SetHeight(pickerHeight)
+		m.width = msg.Width
+		m.height = msg.Height
+		m.resizePicker()
 
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -84,6 +136,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Sprawdzamy, czy użytkownik wybrał plik.
 	if selected, path := m.picker.DidSelectFile(msg); selected {
 		m.selectedFile = path
+		m.resizePicker()
 	}
 
 	return m, cmd
@@ -127,7 +180,7 @@ func renderLogo(width int) string {
 	// Centrujemy cały blok, nie każdą linię osobno.
 	return lipgloss.PlaceHorizontal(
 		width,
-		lipgloss.Center,
+		lipgloss.Left,
 		block,
 	)
 }
@@ -137,49 +190,17 @@ func (m model) View() tea.View {
 		return tea.NewView("")
 	}
 
-	var content strings.Builder
+	content := strings.Join(
+		[]string{
+			m.headerView(),
+			strings.TrimRight(m.picker.View(), "\r\n"),
+			m.footerView(),
+		}, "\n\n",
+	)
 
-	//style := lipgloss.NewStyle().
-	//	Foreground(lipgloss.Color("#FFFFFF")).
-	//	Background(lipgloss.Color("#7D56F4")).
-	//	Bold(true)
-
-	content.WriteString(renderLogo(20))
-
-	content.WriteString("\n")
-	content.WriteString("  ────────────\n")
-	content.WriteString("  Katalog: ")
-	content.WriteString(m.picker.CurrentDirectory)
-	content.WriteString("\n\n")
-
-	content.WriteString(m.picker.View())
-
-	if m.selectedFile != "" {
-		content.WriteString("\n")
-		content.WriteString("  Wybrany plik: ")
-		content.WriteString(m.selectedFile)
-		content.WriteString("\n")
-	}
-
-	hiddenStatus := "wyłączone"
-	if m.picker.ShowHidden {
-		hiddenStatus = "włączone"
-	}
-
-	content.WriteString("\n")
-	content.WriteString("  ↑/k, ↓/j     poruszanie\n")
-	content.WriteString("  enter/l/→    otwórz katalog lub wybierz plik\n")
-	content.WriteString("  h/←/esc      poprzedni katalog\n")
-	content.WriteString("  .            pliki ukryte: ")
-	content.WriteString(hiddenStatus)
-	content.WriteString("\n")
-	content.WriteString("  r            odśwież\n")
-	content.WriteString("  q            wyjście\n")
-
-	view := tea.NewView(content.String())
-	view.BackgroundColor = lipgloss.Color("#c79302")
-	view.ForegroundColor = lipgloss.Color("#000000")
-
+	view := tea.NewView(content)
+	view.BackgroundColor = lipgloss.Color("#0c1e3b")
+	view.ForegroundColor = lipgloss.Color("#ffffff")
 	view.AltScreen = true
 
 	return view
