@@ -13,9 +13,11 @@ func newPicker(directory string) filepicker.Model {
 	picker.ShowPermissions = true
 	picker.ShowSize = true
 	picker.ShowHidden = false
-	picker.DirAllowed = false
+	picker.DirAllowed = true
 	picker.FileAllowed = true
-
+	
+        picker.KeyMap.Open.SetKeys("enter")
+        picker.KeyMap.Select.SetKeys("space")
 	return picker
 }
 
