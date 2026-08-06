@@ -25,6 +25,8 @@ type model struct {
 
 	width  int
 	height int
+
+	error error
 }
 
 func newModel() (model, error) {
