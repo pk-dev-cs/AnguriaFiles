@@ -5,6 +5,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	overlay "github.com/madicen/bubble-overlay"
 )
 
 func (m model) headerView() string {
@@ -89,10 +90,27 @@ func (m model) footerView() string {
 	return content.String()
 }
 
+func popup(message string, width, height int) tea.View {
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		Padding(1, 3).
+		Render(message)
+
+	return tea.NewView(
+		lipgloss.Place(
+			width,
+			height,
+			lipgloss.Center,
+			lipgloss.Center,
+			box,
+		),
+	)
+}
+
 func (m model) View() tea.View {
 	if m.quitting {
 		return tea.NewView("")
-	}
+	}	
 
 	content := strings.Join(
 		[]string{
@@ -102,6 +120,20 @@ func (m model) View() tea.View {
 		},
 		"\n\n",
 	)
+
+	if m.popupMessage != "" {
+		box := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Padding(1, 3).
+			Render(m.popupMessage)
+
+		content = overlay.OverlayViewInCenter(
+			content,
+			box,
+			m.width,
+			m.height,
+		)
+	}
 
 	view := tea.NewView(content)
 	view.BackgroundColor = lipgloss.Color("#0c1e3b")

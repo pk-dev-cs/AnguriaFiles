@@ -39,6 +39,23 @@ func openFileCmd(path string) tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+
+	if m.popupMessage != "" {
+		switch typedMsg := msg.(type) {
+			case tea.KeyPressMsg:
+				if(typedMsg.String() == "esc"){
+					m.popupMessage = ""
+				}
+
+				return m, nil
+
+			case tea.WindowSizeMsg:
+				m.width = typedMsg.Width
+				m.height = typedMsg.Height
+				m.resizePickers()
+		}
+	}
+
 	switch typedMsg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = typedMsg.Width
@@ -56,7 +73,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch typedMsg.String() {
 		case "ctrl+c", "q":
 			m.quitting = true
-			return m, tea.Quit
+			return m, tea.Quit	
 
 		case "tab":
 			if m.activePane == leftPane {
@@ -73,6 +90,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, picker.Init()
 
 		case "r":
+			m.showPopup("Welcome from the new popup!")
 			return m, m.activePicker().Init()
 
 		case "space":
