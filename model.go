@@ -26,6 +26,7 @@ type model struct {
 	width  int
 	height int
 
+	popupMessage string
 	error error
 }
 
@@ -58,4 +59,8 @@ func (m *model) activePicker() *filepicker.Model {
 	}
 
 	return &m.rightPicker
+}
+
+func (m *model) showPopup(message string){
+	m.popupMessage = message
 }
