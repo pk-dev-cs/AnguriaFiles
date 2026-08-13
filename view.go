@@ -85,6 +85,7 @@ func (m model) footerView() string {
 	content.WriteString(hiddenStatus)
 	content.WriteString("\n")
 	content.WriteString("  r            odśwież aktywny panel\n")
+	content.WriteString("  d            pokaż dialog\n")
 	content.WriteString("  q            wyjście")
 
 	return content.String()
@@ -107,10 +108,38 @@ func popup(message string, width, height int) tea.View {
 	)
 }
 
+func renderDialog(dialog *dialogState) string {
+	title := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#f6c453")).
+		Render(dialog.title)
+
+	controls := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#9aa8bd")).
+		Render("[enter/y] OK    [esc/n] Anuluj")
+
+	content := strings.Join(
+		[]string{
+			title,
+			"",
+			dialog.message,
+			"",
+			controls,
+		},
+		"\n",
+	)
+
+	return lipgloss.NewStyle().
+		Border(lipgloss.DoubleBorder()).
+		BorderForeground(lipgloss.Color("#f6c453")).
+		Padding(1, 3).
+		Render(content)
+}
+
 func (m model) View() tea.View {
 	if m.quitting {
 		return tea.NewView("")
-	}	
+	}
 
 	content := strings.Join(
 		[]string{
@@ -130,6 +159,15 @@ func (m model) View() tea.View {
 		content = overlay.OverlayViewInCenter(
 			content,
 			box,
+			m.width,
+			m.height,
+		)
+	}
+
+	if m.dialog != nil {
+		content = overlay.OverlayViewInCenter(
+			content,
+			renderDialog(m.dialog),
 			m.width,
 			m.height,
 		)
