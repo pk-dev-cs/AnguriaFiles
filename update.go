@@ -1,10 +1,10 @@
 package main
 
 import (
+	tea "charm.land/bubbletea/v2"
 	"os"
 	"os/exec"
 	"runtime"
-	tea "charm.land/bubbletea/v2"
 )
 
 type fileOpenedMsg struct {
@@ -39,20 +39,38 @@ func openFileCmd(path string) tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.dialog != nil {
+		switch typedMsg := msg.(type) {
+		case tea.KeyPressMsg:
+			switch typedMsg.String() {
+			case "enter", "y":
+				return m, m.closeDialog(true)
+			case "esc", "n":
+				return m, m.closeDialog(false)
+			}
+
+			return m, nil
+		case tea.WindowSizeMsg:
+			m.width = typedMsg.Width
+			m.height = typedMsg.Height
+			m.resizePickers()
+			return m, nil
+		}
+	}
 
 	if m.popupMessage != "" {
 		switch typedMsg := msg.(type) {
-			case tea.KeyPressMsg:
-				if(typedMsg.String() == "esc"){
-					m.popupMessage = ""
-				}
+		case tea.KeyPressMsg:
+			if typedMsg.String() == "esc" {
+				m.popupMessage = ""
+			}
 
-				return m, nil
+			return m, nil
 
-			case tea.WindowSizeMsg:
-				m.width = typedMsg.Width
-				m.height = typedMsg.Height
-				m.resizePickers()
+		case tea.WindowSizeMsg:
+			m.width = typedMsg.Width
+			m.height = typedMsg.Height
+			m.resizePickers()
 		}
 	}
 
@@ -73,7 +91,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch typedMsg.String() {
 		case "ctrl+c", "q":
 			m.quitting = true
-			return m, tea.Quit	
+			return m, tea.Quit
 
 		case "tab":
 			if m.activePane == leftPane {
@@ -90,8 +108,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, picker.Init()
 
 		case "r":
-			m.showPopup("Welcome from the new popup!")
 			return m, m.activePicker().Init()
+		case "d":
+			m.showDialog(
+				"Potwierdzenie",
+				"Czy chcesz kontynuować?",
+				func(currentModel *model, result bool) tea.Cmd {
+					if result {
+						currentModel.showPopup("Dialog zatwierdzony")
+					} else {
+						currentModel.showPopup("Dialog anulowany")
+					}
+
+					return nil
+				},
+			)
+
+			return m, nil
 
 		case "space":
 			picker := m.activePicker()

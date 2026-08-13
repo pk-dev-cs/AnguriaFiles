@@ -27,7 +27,14 @@ type model struct {
 	height int
 
 	popupMessage string
-	error error
+	dialog       *dialogState
+	error        error
+}
+
+type dialogState struct {
+	title     string
+	message   string
+	onResolve func(*model, bool) tea.Cmd
 }
 
 func newModel() (model, error) {
@@ -61,6 +68,32 @@ func (m *model) activePicker() *filepicker.Model {
 	return &m.rightPicker
 }
 
-func (m *model) showPopup(message string){
+func (m *model) showPopup(message string) {
 	m.popupMessage = message
+}
+
+func (m *model) showDialog(
+	title, message string,
+	onResolve func(*model, bool) tea.Cmd,
+) {
+	m.dialog = &dialogState{
+		title:     title,
+		message:   message,
+		onResolve: onResolve,
+	}
+}
+
+func (m *model) closeDialog(result bool) tea.Cmd {
+	if m.dialog == nil {
+		return nil
+	}
+
+	onResolve := m.dialog.onResolve
+	m.dialog = nil
+
+	if onResolve != nil {
+		return onResolve(m, result)
+	}
+
+	return nil
 }
