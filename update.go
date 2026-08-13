@@ -109,22 +109,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "r":
 			return m, m.activePicker().Init()
-		case "d":
-			m.showDialog(
+		case "delete":
+			picker := m.activePicker()
+			path := picker.HighlightedPath()
+			if path != "" {
+				m.showDialog(
 				"Potwierdzenie",
 				"Czy chcesz kontynuować?",
 				func(currentModel *model, result bool) tea.Cmd {
 					if result {
-						currentModel.showPopup("Dialog zatwierdzony")
-					} else {
-						currentModel.showPopup("Dialog anulowany")
+						err := os.Remove(path)
+						if err != nil{
+							currentModel.showPopup(err.Error())							
+						}
 					}
 
-					return nil
+					return picker.Init()
 				},
-			)
+			) }
 
-			return m, nil
+			return m, nil	
 
 		case "space":
 			picker := m.activePicker()
