@@ -1,10 +1,14 @@
 package main
 
 import (
-	tea "charm.land/bubbletea/v2"
+	"io"
 	"os"
 	"os/exec"
 	"runtime"
+	"path/filepath"
+
+	"charm.land/bubbles/v2/filepicker"
+	tea "charm.land/bubbletea/v2"
 )
 
 type fileOpenedMsg struct {
