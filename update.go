@@ -1,10 +1,14 @@
 package main
 
 import (
-	tea "charm.land/bubbletea/v2"
+	"io"
 	"os"
 	"os/exec"
 	"runtime"
+	"path/filepath"
+
+	"charm.land/bubbles/v2/filepicker"
+	tea "charm.land/bubbletea/v2"
 )
 
 type fileOpenedMsg struct {
@@ -36,6 +40,23 @@ func openFileCmd(path string) tea.Cmd {
 			err:  cmd.Run(),
 		}
 	}
+}
+
+func copyFile(sourcePath, destinationPath string) error {
+	source, err := os.Open(sourcePath)
+	if err != nil {
+		return err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(destinationPath)
+	if err != nil {
+		return err
+	}
+	defer destination.Close()
+
+	_, err = io.Copy(destination, source)
+	return err
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -119,8 +140,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				func(currentModel *model, result bool) tea.Cmd {
 					if result {
 						err := os.Remove(path)
-						if err != nil{
-							currentModel.showPopup(err.Error())							
+						if err != nil {
+							currentModel.showPopup(err.Error())
 						}
 					}
 
@@ -129,7 +150,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			) }
 
 			return m, nil	
+		case "f5":
+			picker := m.activePicker()
+			path := picker.HighlightedPath()
+			if path == "" {
+				return m, nil
+			}
 
+			var oppositePicker *filepicker.Model
+			if picker == &m.leftPicker {
+				oppositePicker = &m.rightPicker 
+			} else {
+				oppositePicker = &m.leftPicker
+			}
+
+			destinationPath := filepath.Join(oppositePicker.CurrentDirectory, filepath.Base(path)) 
+			err := copyFile(path, destinationPath)
+			if err != nil {
+				m.showPopup(err.Error())
+			}
+				
+
+			return m, oppositePicker.Init()
+			
+			
 		case "space":
 			picker := m.activePicker()
 			path := picker.HighlightedPath()
