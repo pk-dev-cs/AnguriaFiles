@@ -140,8 +140,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				func(currentModel *model, result bool) tea.Cmd {
 					if result {
 						err := os.Remove(path)
-						if err != nil{
-							currentModel.showPopup(err.Error())							
+						if err != nil {
+							currentModel.showPopup(err.Error())
 						}
 					}
 
@@ -150,7 +150,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			) }
 
 			return m, nil	
+		case "f5":
+			picker := m.activePicker()
+			path := picker.HighlightedPath()
+			if path == "" {
+				return m, nil
+			}
 
+			var oppositePicker *filepicker.Model
+			if picker == &m.leftPicker {
+				oppositePicker = &m.rightPicker 
+			} else {
+				oppositePicker = &m.leftPicker
+			}
+
+			destinationPath := filepath.Join(oppositePicker.CurrentDirectory, filepath.Base(path)) 
+			err := copyFile(path, destinationPath)
+			if err != nil {
+				m.showPopup(err.Error())
+			}
+				
+
+			return m, oppositePicker.Init()
+			
+			
 		case "space":
 			picker := m.activePicker()
 			path := picker.HighlightedPath()
